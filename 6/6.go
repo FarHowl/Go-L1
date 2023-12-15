@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"fmt"
-	"sync"
 )
 
 func worker_context(ctx context.Context) {
@@ -12,13 +11,12 @@ func worker_context(ctx context.Context) {
 }
 
 func worker_channel(stop chan bool) {
-	<-stop
-	fmt.Println("Worker was stopped by channel")
-}
-
-func worker_wait_group(wg *sync.WaitGroup) {
-	defer wg.Done()
-	fmt.Println("Goroutine was stopped by wait group")
+	select {
+	case <-stop:
+		fmt.Println("Worker was stopped by channel")
+	default:
+		fmt.Println("Working")
+	}
 }
 
 func main() {
@@ -33,12 +31,6 @@ func main() {
 	go worker_channel(stop)
 
 	stop <- true
-
-	// Wait Group
-	var wg sync.WaitGroup
-	wg.Add(1)
-	go worker_wait_group(&wg)
-	wg.Wait()
 
 	fmt.Println("Goroutines were stopped")
 }
